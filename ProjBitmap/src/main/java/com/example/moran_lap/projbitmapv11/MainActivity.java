@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int NOTIFY_DATA_SET_CHANGED = 2;
     private Composer mComposer;
     public static Object locker= new Object();
-
+    public static Object bitmapLocker= new Object();
     // ImageView - Preview
     private ImageView mImageView;
     private static int RESULT_LOAD_IMG = 1;
@@ -172,12 +172,14 @@ public class MainActivity extends AppCompatActivity {
                 //i++;
                 while (true) {
                     synchronized (locker) {
-                        refreshSurfaceComponentsOnBitmap();
+                        synchronized (bitmapLocker) {
+                            refreshSurfaceComponentsOnBitmap();
 
-                        Message msg = handler.obtainMessage();
-                        msg.what = UPDATE_IMAGE;
-                        msg.obj = mComposer.getBackgroundBitmap();
-                        handler.sendMessage(msg);
+                            Message msg = handler.obtainMessage();
+                            msg.what = UPDATE_IMAGE;
+                            msg.obj = mComposer.getBackgroundBitmap();
+                            handler.sendMessage(msg);
+                        }
                     }
                     try {
                         Thread.sleep(16);
@@ -194,8 +196,10 @@ public class MainActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             synchronized (locker) {
                 if (msg.what == UPDATE_IMAGE) {
-                    Canvas canvas = new Canvas(mComposer.getmPreviewBitmap());
-                    canvas.drawBitmap(mComposer.getBackgroundBitmap(), 0, 0, null);
+                    synchronized (bitmapLocker) {
+                        Canvas canvas = new Canvas(mComposer.getmPreviewBitmap());
+                        canvas.drawBitmap(mComposer.getBackgroundBitmap(), 0, 0, null);
+                    }
                     mComposer.getImageView().invalidate();
                     mComposer.getImageView().postInvalidate();
                 }
@@ -275,14 +279,17 @@ public class MainActivity extends AppCompatActivity {
 
     public void refreshSurfaceComponentsOnBitmap(){
         //SCadapter.swap((ArrayList<SurfaceComponent>) mSurfaceComponents.clone());
-        mComposer.initBitmap();
-        ArrayList<SurfaceComponent> reversedSurfaceComponents = new ArrayList<>(mSurfaceComponents);
-        Collections.reverse(reversedSurfaceComponents);
-        for (SurfaceComponent sc : reversedSurfaceComponents){
-            if (sc.isEnabled()){
-                Bitmap bitmapToDraw = sc.DrawSurfaceComponentOnBitmap();
-                Canvas canvas = new Canvas(mComposer.getBackgroundBitmap());
-                canvas.drawBitmap(bitmapToDraw, sc.getImagePositionOnSurface().getxStart(), sc.getImagePositionOnSurface().getyStart(), null);
+        synchronized (bitmapLocker) {
+            mComposer.initBitmap();
+            ArrayList<SurfaceComponent> reversedSurfaceComponents = new ArrayList<>(mSurfaceComponents);
+            Collections.reverse(reversedSurfaceComponents);
+            for (SurfaceComponent sc : reversedSurfaceComponents) {
+                if (sc.isEnabled()) {
+                    Bitmap bitmapToDraw = sc.DrawSurfaceComponentOnBitmap();
+                    Canvas canvas = new Canvas(mComposer.getBackgroundBitmap());
+                    canvas.drawBitmap(bitmapToDraw, sc.getImagePositionOnSurface().getxStart(), sc.getImagePositionOnSurface().getyStart(), null);
+
+                }
             }
         }
     }

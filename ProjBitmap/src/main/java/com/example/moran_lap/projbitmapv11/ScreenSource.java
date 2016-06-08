@@ -8,6 +8,7 @@ import android.view.View;
  */
 public class ScreenSource extends ImageSource {
 
+    private static Object loc = new Object();
     public ScreenSource(){
         sourceName = "Screen";
     }
@@ -15,12 +16,16 @@ public class ScreenSource extends ImageSource {
     @Override
     public Bitmap getImage() {
         View v1;
+        Bitmap bitmap;
+        synchronized (loc) {
         v1 = ApplicationContext.getActivity().getWindow().getDecorView().getRootView();
         //v1 = getWindow().getDecorView().getRootView();
         v1.setDrawingCacheEnabled(true);
-        Bitmap bitmap = Bitmap.createBitmap(v1.getDrawingCache());
-        v1.setDrawingCacheEnabled(false);
 
+
+            bitmap = Bitmap.createBitmap(v1.getDrawingCache());
+            v1.setDrawingCacheEnabled(false);
+        }
         return bitmap;
     }
 

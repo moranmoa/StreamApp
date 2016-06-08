@@ -10,7 +10,7 @@ import android.widget.ImageView;
  * Created by Moran-Lap on 23/04/2016.
  */
 public class CameraSource extends ImageSource {
-
+    private static Object loc= new Object();
     Camera2BasicFragment camera2BasicFragment;
 
     public CameraSource() {
@@ -26,7 +26,10 @@ public class CameraSource extends ImageSource {
     public Bitmap getImage() {
         AutoFitTextureView v2;
         v2 = (AutoFitTextureView)ApplicationContext.getActivity().findViewById(R.id.texture);
-        Bitmap bitmap1 = v2.getBitmap();
+        Bitmap bitmap1;
+        synchronized (loc) {
+            bitmap1 = v2.getBitmap();
+        }
         return bitmap1;
     }
 

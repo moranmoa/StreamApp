@@ -68,90 +68,95 @@ public class SurfaceComponentAdapter extends RecyclerView.Adapter<SurfaceCompone
         });
         holder.optionsButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
-                //Creating the instance of PopupMenu
-                PopupMenu popup = new PopupMenu(mainActivity, v);
-                //Inflating the Popup using xml file
-                popup.getMenuInflater().inflate(R.menu.list_item_popup_view, popup.getMenu());
+            public void onClick(View v) {
+                synchronized (mainActivity.locker) {
+                    //Creating the instance of PopupMenu
+                    PopupMenu popup = new PopupMenu(mainActivity, v);
+                    //Inflating the Popup using xml file
+                    popup.getMenuInflater().inflate(R.menu.list_item_popup_view, popup.getMenu());
 
-                //registering popup with OnMenuItemClickListener
-                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener()
-                {
-                    public boolean onMenuItemClick(MenuItem item)
-                    {
-                        switch(item.getItemId())
-                        {
-                            case (R.id.set_position) :
-                                AlertDialog.Builder builder = new AlertDialog.Builder(ApplicationContext.getActivity());
-                                builder.setTitle("Insert position here");
+                    //registering popup with OnMenuItemClickListener
+                    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        public boolean onMenuItemClick(MenuItem item) {
+                            synchronized (mainActivity.locker) {
+                                switch (item.getItemId()) {
+                                    case (R.id.set_position):
+                                        AlertDialog.Builder builder = new AlertDialog.Builder(ApplicationContext.getActivity());
+                                        builder.setTitle("Insert position here");
 
-                                // Get the layout inflater
-                                LayoutInflater inflater = ApplicationContext.getActivity().getLayoutInflater();
+                                        // Get the layout inflater
+                                        LayoutInflater inflater = ApplicationContext.getActivity().getLayoutInflater();
 
-                                final View setPositionView = inflater.inflate(R.layout.edit_position_layout, null);
+                                        final View setPositionView = inflater.inflate(R.layout.edit_position_layout, null);
 
-                                // Inflate and set the layout for the dialog
-                                // Pass null as the parent view because its going in the dialog layout
-                                builder.setView(setPositionView)
-                                // Set up the buttons
-                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        TextView xStartView = (TextView)setPositionView.findViewById(R.id.x_start);
-                                        TextView xEndView = (TextView)setPositionView.findViewById(R.id.x_end);
-                                        TextView yStartView = (TextView)setPositionView.findViewById(R.id.y_start);
-                                        TextView yEndView = (TextView)setPositionView.findViewById(R.id.y_end);
+                                        // Inflate and set the layout for the dialog
+                                        // Pass null as the parent view because its going in the dialog layout
+                                        builder.setView(setPositionView)
+                                                // Set up the buttons
+                                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        TextView xStartView = (TextView) setPositionView.findViewById(R.id.x_start);
+                                                        TextView xEndView = (TextView) setPositionView.findViewById(R.id.x_end);
+                                                        TextView yStartView = (TextView) setPositionView.findViewById(R.id.y_start);
+                                                        TextView yEndView = (TextView) setPositionView.findViewById(R.id.y_end);
 
-                                        int xStart = Integer.parseInt(xStartView.getText().toString());
-                                        int xEnd = Integer.parseInt(xEndView.getText().toString());
-                                        int yStart = Integer.parseInt(yStartView.getText().toString());
-                                        int yEnd = Integer.parseInt(yEndView.getText().toString());
+                                                        int xStart = Integer.parseInt(xStartView.getText().toString());
+                                                        int xEnd = Integer.parseInt(xEndView.getText().toString());
+                                                        int yStart = Integer.parseInt(yStartView.getText().toString());
+                                                        int yEnd = Integer.parseInt(yEndView.getText().toString());
 
+                                                        SurfaceComponent sComponent = surfaceComponents.get(position);
+                                                        Position newPosition = new Position(xStart, xEnd, yStart, yEnd);
+                                                        sComponent.setImagePositionOnSurface(newPosition);
+                                                        ((MainActivity) ApplicationContext.getActivity()).refreshSurfaceComponentsOnBitmap();
+                                                    }
+                                                })
+                                                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        dialog.cancel();
+                                                    }
+                                                });
+                                        builder.show();
+                                        break;
+                                    case (R.id.configure_surface_component):
                                         SurfaceComponent sComponent = surfaceComponents.get(position);
-                                        Position newPosition = new Position(xStart,xEnd,yStart,yEnd);
-                                        sComponent.setImagePositionOnSurface(newPosition);
-                                        ((MainActivity)ApplicationContext.getActivity()).refreshSurfaceComponentsOnBitmap();
-                                    }
-                                })
-                                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.cancel();
-                                    }
-                                });
-                                builder.show();
-                                break;
-                            case (R.id.configure_surface_component) :
-                                SurfaceComponent sComponent = surfaceComponents.get(position);
-                                sComponent.getImageSource().EditSource();
-                                break;
-                            case (R.id.delete_surface_component) :
-                                surfaceComponents.remove(surfaceComponents.get(position));
-                                swap((ArrayList<SurfaceComponent>) surfaceComponents);
-                                break;
+                                        sComponent.getImageSource().EditSource();
+                                        break;
+                                    case (R.id.delete_surface_component):
+                                        surfaceComponents.remove(surfaceComponents.get(position));
+                                        swap((ArrayList<SurfaceComponent>) surfaceComponents);
+                                        break;
+                                }
+                                ((MainActivity) ApplicationContext.getActivity()).refreshSurfaceComponentsOnBitmap();
+                                return true;
+                            }
                         }
-                        ((MainActivity)ApplicationContext.getActivity()).refreshSurfaceComponentsOnBitmap();
-                        return true;
-                    }
-                });
-                popup.show();//showing popup menu
+                    });
+                    popup.show();//showing popup menu
+                }
+
             }
         });
     }
 
     @Override
     public int getItemCount() {
-        return surfaceComponents.size();
+        synchronized (mainActivity.locker) {
+            return surfaceComponents.size();
+        }
     }
 
     public void swap(ArrayList<SurfaceComponent> datas){
-        surfaceComponents.clear();
-        surfaceComponents.addAll(datas);
-        //notifyDataSetChanged();
-        Message msg = handler.obtainMessage();
-        msg.what = NOTIFY_DATA_SET_CHANGED;
-        handler.sendMessage(msg);
+        synchronized (mainActivity.locker) {
+            surfaceComponents.clear();
+            surfaceComponents.addAll(datas);
+            //notifyDataSetChanged();
+            Message msg = handler.obtainMessage();
+            msg.what = NOTIFY_DATA_SET_CHANGED;
+            handler.sendMessage(msg);
+        }
     }
 
     @Override
