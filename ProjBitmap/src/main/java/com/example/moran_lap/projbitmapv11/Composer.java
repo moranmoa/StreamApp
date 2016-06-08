@@ -32,7 +32,6 @@ public class Composer extends Service {
     private void initPreview() {
         mSurfaceView = (SurfaceView) ApplicationContext.getActivity().findViewById(R.id.surfaceView);
         initBitmap();
-
     }
 
     public SurfaceView getSurfaceView() {

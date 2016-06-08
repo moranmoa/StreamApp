@@ -13,14 +13,19 @@
     tools:context="com.example.moran_lap.projbitmapv11.MainActivity"
     tools:showIn="@layout/activity_main">
 
+    <FrameLayout
+        android:layout_width="fill_parent"
+        android:id="@+id/frameLayout"
+        android:layout_height="fill_parent">
         <SurfaceView
             android:layout_width="match_parent"
             android:layout_height="210dp"
             android:id="@+id/surfaceView"/>
+    </FrameLayout>
 
         <android.support.v7.widget.RecyclerView
             android:layout_marginTop="@dimen/activity_horizontal_margin"
-            android:layout_below="@+id/surfaceView"
+            android:layout_below="@+id/frameLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/recyclerView"
@@ -52,7 +57,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
 
-            android:layout_toEndOf="@+id/surfaceView" />
+            android:layout_toEndOf="@+id/frameLayout" />
 <!--pink bar-->
         <FrameLayout
             android:id="@+id/control"

@@ -7,8 +7,11 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.media.MediaRecorder;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
@@ -19,20 +22,28 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.PopupMenu;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 
-public class MainActivity extends AppCompatActivity implements Runnable {
+import static android.media.MediaCodec.createPersistentInputSurface;
+
+public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback, Runnable {
 
     private static final int UPDATE_IMAGE = 1;
     private static final int NOTIFY_DATA_SET_CHANGED = 2;
@@ -40,9 +51,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     public static Object locker= new Object();
     public static Object bitmapLocker= new Object();
     // ImageView - Preview
-    private Thread thread;
-    private SurfaceView mSurfaceView;
-    private SurfaceHolder holder;
+
     private static int RESULT_LOAD_IMG = 1;
 
     // DragNDropListView - SurfaceComponents with checkboxes
@@ -60,6 +69,15 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     CameraSource CameraSource;
     private boolean surfaceLocker = true;
 
+    // Stream
+    private final String VIDEO_PATH_NAME = "/mnt/sdcard/VGA_30fps_512vbrate.mp4";
+
+    private MediaRecorder mMediaRecorder;
+    private Thread thread;
+    private SurfaceView mSurfaceView;
+    private SurfaceHolder mHolder;
+    private boolean mInitSuccesful;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,7 +90,10 @@ public class MainActivity extends AppCompatActivity implements Runnable {
 
         // Initialize View components
         mSurfaceView = (SurfaceView)findViewById(R.id.surfaceView);
-        holder = mSurfaceView.getHolder();
+        mHolder = mSurfaceView.getHolder();
+        mHolder.addCallback(this);
+        mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+
         CameraSource = new CameraSource();
         //final Composer mComposer = new Composer();
         mComposer = new Composer();
@@ -94,13 +115,31 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         touchHelper.attachToRecyclerView(mRecyclerView);
 
         mStreamButton = (Button) findViewById(R.id.streamButton);
+
         mStreamButton.setOnClickListener(new View.OnClickListener() {
             @Override
+            // toggle video recording
             public void onClick(View v) {
-                if (startStream)
+                if (startStream) {
                     mStreamButton.setText("Stop Stream");
-                else
+                    mMediaRecorder.start();
+                    try {
+                        Thread.sleep(10 * 1000); // This will recode for 10 seconds, if you don't want then just remove it.
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    finish();
+                }
+                else {
                     mStreamButton.setText("Start Stream");
+                    mMediaRecorder.stop();
+                    mMediaRecorder.reset();
+                    try {
+                        initRecorder(mHolder.getSurface());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
                 startStream = !startStream;
             }
         });
@@ -168,6 +207,39 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         }
 
         runThread();
+    }
+
+    /* Init the MediaRecorder, the order the methods are called is vital to
+ * its correct functioning */
+    private void initRecorder(Surface surface) throws IOException {
+        // It is very important to unlock the camera before doing setCamera
+        // or it will results in a black preview
+
+        if(mMediaRecorder == null)  mMediaRecorder = new MediaRecorder();
+        mMediaRecorder.setPreviewDisplay(surface);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            //createPersistentInputSurface();
+            mMediaRecorder.setInputSurface(surface);//.setCamera(mCamera);
+        }
+
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+        //       mMediaRecorder.setOutputFormat(8);
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mMediaRecorder.setVideoEncodingBitRate(512 * 1000);
+        mMediaRecorder.setVideoFrameRate(30);
+        mMediaRecorder.setVideoSize(640, 480);
+        mMediaRecorder.setOutputFile(VIDEO_PATH_NAME);
+
+        try {
+            mMediaRecorder.prepare();
+        } catch (IllegalStateException e) {
+            // This is thrown if the previous calls are not called with the
+            // proper order
+            e.printStackTrace();
+        }
+
+        mInitSuccesful = true;
     }
 
     private void runThread() {
@@ -358,11 +430,11 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     public void run() {
         while(surfaceLocker) {
             //checks if the lockCanvas() method will be success,and if not, will check this statement again
-            if (!holder.getSurface().isValid())
+            if (!mHolder.getSurface().isValid())
                 continue;
-            Canvas canvas = holder.lockCanvas();
+            Canvas canvas = mHolder.lockCanvas();
             draw(canvas);
-            holder.unlockCanvasAndPost(canvas);
+            mHolder.unlockCanvasAndPost(canvas);
             //waitingForInput = true;
         }
     }
@@ -371,4 +443,65 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         //canvas.drawColor(Color.rgb(0, 135, 0));
         canvas.drawBitmap(mComposer.getmPreviewBitmap(),0, 0, null );
     }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        try {
+            if(!mInitSuccesful)
+                initRecorder(mHolder.getSurface());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        shutdown();
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
+
+    private void shutdown() {
+        // Release MediaRecorder and especially the Camera as it's a shared
+        // object that can be used by other applications
+        mMediaRecorder.reset();
+        mMediaRecorder.release();
+
+        // once the objects have been released they can't be reused
+        mMediaRecorder = null;
+    }
+
+//    private static File getOutputMediaFile(int type){
+//        // To be safe, you should check that the SDCard is mounted
+//        // using Environment.getExternalStorageState() before doing this.
+//
+//        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+//                Environment.DIRECTORY_PICTURES), "MyCameraApp");
+//        // This location works best if you want the created images to be shared
+//        // between applications and persist after your app has been uninstalled.
+//
+//        // Create the storage directory if it does not exist
+//        if (! mediaStorageDir.exists()){
+//            if (! mediaStorageDir.mkdirs()){
+//                Log.d("MyCameraApp", "failed to create directory");
+//                return null;
+//            }
+//        }
+//
+//        // Create a media file name
+//        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+//        File mediaFile;
+//        if (type == MEDIA_TYPE_IMAGE){
+//            mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+//                    "IMG_"+ timeStamp + ".jpg");
+//        } else if(type == MEDIA_TYPE_VIDEO) {
+//            mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+//                    "VID_"+ timeStamp + ".mp4");
+//        } else {
+//            return null;
+//        }
+//
+//        return mediaFile;
+//    }
 }
