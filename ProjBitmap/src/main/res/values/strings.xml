@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Streaming Application</string>
+    <string name="action_settings">Settings</string>
+    <string name="spinner_title">Select Source</string>
+    <string name="title_activity_main2">Main2Activity</string>
+    <string name="picture">picture</string>
+    <string name="description_info">description info</string>
+    <string name="request_permission">request permission</string>
+    <string name="camera_error">camera error</string>
+    <string name="intro_message">intro message</string>
+    <string name="x_start">x start</string>
+    <string name="x_end">x end</string>
+    <string name="y_start">y start</string>
+    <string name="y_end">y end</string>
+    <string name="service_name">Refresh Service</string>
+
+</resources>

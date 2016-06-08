@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/camera_source"
+        android:title="Camera"/>
+
+    <item
+        android:id="@+id/text_source"
+        android:title="Text"/>
+
+    <item
+        android:id="@+id/screen_source"
+        android:title="Screen"/>
+
+    <item
+        android:id="@+id/image_source"
+        android:title="Image"/>
+</menu>
