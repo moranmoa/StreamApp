@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.view.SurfaceView;
 import android.widget.ImageView;
 
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ public class Composer extends Service {
 
     private Bitmap mBackgroundBitmap;
     private Bitmap mPreviewBitmap;
-    private ImageView mImageView;
+    private SurfaceView mSurfaceView;
     private ArrayList<SurfaceComponent> mSurfaceComponents;
     private Object mObj;
 
@@ -29,13 +30,13 @@ public class Composer extends Service {
     }
 
     private void initPreview() {
-        mImageView = (ImageView) ApplicationContext.getActivity().findViewById(R.id.imageView);
+        mSurfaceView = (SurfaceView) ApplicationContext.getActivity().findViewById(R.id.surfaceView);
         initBitmap();
 
     }
 
-    public ImageView getImageView() {
-        return mImageView;
+    public SurfaceView getImageView() {
+        return mSurfaceView;
     }
 
     void initBitmap() {
@@ -46,7 +47,7 @@ public class Composer extends Service {
         if (mPreviewBitmap == null) {
             mPreviewBitmap = Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888);
             mPreviewBitmap.eraseColor(Color.BLACK);
-            mImageView.setImageBitmap(mPreviewBitmap);
+            //mSurfaceView.setImageBitmap(mPreviewBitmap);
         }
     }
 

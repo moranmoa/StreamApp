@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,9 +20,11 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.view.LayoutInflater;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -31,9 +34,8 @@ import android.widget.Toast;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.zip.Inflater;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements Runnable {
 
     private static final int UPDATE_IMAGE = 1;
     private static final int NOTIFY_DATA_SET_CHANGED = 2;
@@ -41,7 +43,9 @@ public class MainActivity extends AppCompatActivity {
     public static Object locker= new Object();
     public static Object bitmapLocker= new Object();
     // ImageView - Preview
-    private ImageView mImageView;
+    private Thread thread;
+    private SurfaceView mSurfaceView;
+    private SurfaceHolder holder;
     private static int RESULT_LOAD_IMG = 1;
 
     // DragNDropListView - SurfaceComponents with checkboxes
@@ -57,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionButton fab;
 
     CameraSource CameraSource;
+    private boolean surfaceLocker = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +74,10 @@ public class MainActivity extends AppCompatActivity {
         ApplicationContext.setActivity(this);
 
         // Initialize View components
-        mImageView = (ImageView)findViewById(R.id.imageView);
+        mSurfaceView = (SurfaceView)findViewById(R.id.surfaceView);
+        holder = mSurfaceView.getHolder();
+
+
         CameraSource = new CameraSource();
         //final Composer mComposer = new Composer();
         mComposer = new Composer();
@@ -101,6 +109,9 @@ public class MainActivity extends AppCompatActivity {
                 startStream = !startStream;
             }
         });
+
+        thread = new Thread(this);
+        thread.start();
 
         fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -347,4 +358,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    public void run() {
+        while(surfaceLocker) {
+            //checks if the lockCanvas() method will be success,and if not, will check this statement again
+            if (!holder.getSurface().isValid())
+                continue;
+            Canvas canvas = holder.lockCanvas();
+            draw(canvas);
+            holder.unlockCanvasAndPost(canvas);
+            //waitingForInput = true;
+        }
+    }
+
+    private void draw(Canvas canvas) {
+        //canvas.drawColor(Color.rgb(0, 135, 0));
+        canvas.drawBitmap(mComposer.getmPreviewBitmap(),0, 0, null );
+    }
 }
