@@ -1,9 +1,6 @@
 package com.example.moran_lap.projbitmapv11;
 
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.view.View;
-import android.widget.ImageView;
 
 
 /**

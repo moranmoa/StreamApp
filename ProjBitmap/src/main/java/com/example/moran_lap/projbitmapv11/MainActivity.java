@@ -7,7 +7,6 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,14 +19,12 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
@@ -76,8 +73,6 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         // Initialize View components
         mSurfaceView = (SurfaceView)findViewById(R.id.surfaceView);
         holder = mSurfaceView.getHolder();
-
-
         CameraSource = new CameraSource();
         //final Composer mComposer = new Composer();
         mComposer = new Composer();
@@ -210,9 +205,10 @@ public class MainActivity extends AppCompatActivity implements Runnable {
                     synchronized (bitmapLocker) {
                         Canvas canvas = new Canvas(mComposer.getmPreviewBitmap());
                         canvas.drawBitmap(mComposer.getBackgroundBitmap(), 0, 0, null);
+
+                        mComposer.getSurfaceView().invalidate();
+                        mComposer.getSurfaceView().postInvalidate();
                     }
-                    mComposer.getImageView().invalidate();
-                    mComposer.getImageView().postInvalidate();
                 }
                 if (msg.what == NOTIFY_DATA_SET_CHANGED) {
                     SCadapter.notifyDataSetChanged();

@@ -35,7 +35,7 @@ public class Composer extends Service {
 
     }
 
-    public SurfaceView getImageView() {
+    public SurfaceView getSurfaceView() {
         return mSurfaceView;
     }
 
