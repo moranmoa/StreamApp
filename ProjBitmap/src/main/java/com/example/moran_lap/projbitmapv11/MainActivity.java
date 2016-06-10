@@ -219,7 +219,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         mMediaRecorder.setPreviewDisplay(surface);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             //createPersistentInputSurface();
-            mMediaRecorder.setInputSurface(surface);//.setCamera(mCamera);
+            //mMediaRecorder.setInputSurface(surface);//.setCamera(mCamera);
         }
 
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
